@@ -4,3 +4,5 @@ python-dotenv
 requests
 pandas
 openpyxl
+crewai==0.140.0
+tiktoken
