@@ -26,7 +26,13 @@
   </style>
 </head>
 <body>
-
+{% if request.args.get('upload') %}
+  <div style="background-color: #ddf; padding: 10px; margin-bottom: 10px;">
+    Upload concluído: {{ request.args.get('enviados') }} enviados,
+    {{ request.args.get('erros') }} erros.
+  </div>
+{% endif %}
+  
 <div class="tabs">
   <div class="tab active" onclick="showTab('upload')">📤 Upload</div>
   <div class="tab" onclick="showTab('reservas')">📋 Reservas</div>
