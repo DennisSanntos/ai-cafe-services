@@ -1,1 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personalização do Café</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+    #chat {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .mensagem { margin-bottom: 12px; }
+    .usuario { text-align: right; color: #0056b3; }
+    .ia { text-align: left; color: #444; }
+    #entrada {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1em;
+    }
+    input {
+      flex: 1;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    button:hover {
+      background: #1e7e34;
+    }
+  </style>
+</head>
+<body>
 
+<div id="chat">
+  <h2>Olá, {{ reserva.nome_hospede }}!</h2>
+  <p>Vamos personalizar seu café da manhã para o apartamento {{ reserva.apartamento }}.</p>
+
+  <div id="mensagens"></div>
+
+  <div id="entrada">
+    <input id="mensagem" placeholder="Digite sua resposta..." />
+    <button onclick="enviar()">Enviar</button>
+  </div>
+</div>
+
+<script>
+  const reserva_id = "{{ reserva.voucher }}";
+  const mensagens = document.getElementById('mensagens');
+
+  function adicionarMensagem(texto, classe) {
+    const div = document.createElement('div');
+    div.className = 'mensagem ' + classe;
+    div.innerText = texto;
+    mensagens.appendChild(div);
+    mensagens.scrollTop = mensagens.scrollHeight;
+  }
+
+  async function enviar() {
+    const input = document.getElementById('mensagem');
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    adicionarMensagem(texto, 'usuario');
+    input.value = '';
+
+    const resp = await fetch('/chat/ia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reserva_id: reserva_id, mensagem: texto })
+    });
+
+    const data = await resp.json();
+    adicionarMensagem(data.resposta, 'ia');
+  }
+
+  // Mensagem de boas-vindas inicial
+  window.onload = () => {
+    adicionarMensagem("😄 Olá! Sou o assistente do café. Vamos começar?", "ia");
+  };
+</script>
+
+</body>
+</html>
