@@ -1,10 +1,12 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, redirect
 import os
+from datetime import datetime
 from app.tools.ingestor import processar_planilhas
-from app.tools.baserow import buscar_por_voucher
+from app.tools.baserow import buscar_por_voucher, listar_reservas
 from app.crew.crew_config import criar_crew_cafe
 
 main = Blueprint('main', __name__)
+agentes_chat = {}  # memória temporária para sessões
 
 @main.route('/')
 def home():
@@ -32,18 +34,39 @@ def ingestar():
     return redirect(f"/painel?upload={status}&enviados={resultado['enviados']}&erros={resultado['erros']}")
 
 
+@main.route('/painel')
+def painel():
+    reservas = listar_reservas()
+    return render_template("painel.html", reservas=reservas)
+
+
+# RENDERIZA O CHAT HTML
 @main.route('/chat')
 def chat():
     reserva_id = request.args.get("reserva_id")
     if not reserva_id:
         return "reserva_id ausente na URL", 400
+    return render_template("chat.html")
 
-    reserva = buscar_por_voucher(reserva_id)
-    if not reserva or "nome_hospede" not in reserva:
-        return "Reserva não encontrada", 404
 
-    return render_template("chat.html", reserva=reserva)
+# CONSULTA DADOS DE CONTEXTO DA RESERVA
+@main.route('/chat/contexto')
+def obter_contexto():
+    reserva_id = request.args.get("reserva_id")
+    dados = buscar_por_voucher(reserva_id)
+    if not dados or "erro" in dados:
+        return jsonify({"erro": "Reserva não encontrada"}), 404
 
+    return jsonify({
+        "nome": dados.get("nome_hospede_principal"),
+        "quarto": dados.get("apartamento"),
+        "checkin": dados.get("checkin"),
+        "checkout": dados.get("checkout"),
+        "voucher": dados.get("voucher")
+    })
+
+
+# CHAT IA VIA POST
 @main.route('/chat/ia', methods=['POST'])
 def chat_ia():
     data = request.get_json()
@@ -57,22 +80,17 @@ def chat_ia():
     if not reserva:
         return jsonify({"erro": "Reserva não encontrada"}), 404
 
-    contexto = {
-        "nome": reserva.get("nome_hospede"),
-        "voucher": reserva.get("voucher"),
-        "quarto": reserva.get("apartamento"),
-        "checkin": reserva.get("checkin"),
-        "checkout": reserva.get("checkout")
-    }
+    if reserva_id not in agentes_chat:
+        contexto = {
+            "nome": reserva.get("nome_hospede_principal"),
+            "voucher": reserva.get("voucher"),
+            "quarto": reserva.get("apartamento"),
+            "checkin": reserva.get("checkin"),
+            "checkout": reserva.get("checkout")
+        }
+        agentes_chat[reserva_id] = criar_crew_cafe(contexto)
 
-    crew = criar_crew_cafe(contexto)
+    crew = agentes_chat[reserva_id]
     resposta = crew.chat(msg_usuario)
-
     return jsonify({"resposta": resposta})
-
-@main.route('/painel')
-def painel():
-    from app.tools.baserow import listar_reservas
-    reservas = listar_reservas()
-    return render_template("painel.html", reservas=reservas)
 
