@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, date
 import os
 
 from app.tools.baserow import criar_linha
@@ -58,7 +58,7 @@ def processar_planilhas(path_periodo, path_apartamentos):
                 valor = row[k]
                 if isinstance(valor, (datetime, pd.Timestamp)):
                     valor = valor.date().isoformat()
-                elif isinstance(valor, datetime.date):
+                elif isinstance(valor, date):
                     valor = valor.isoformat()
                 payload[k] = valor
 
