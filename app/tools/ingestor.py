@@ -40,7 +40,7 @@ def processar_planilhas(path_periodo, path_apartamentos):
     # Formatar campos
     df["checkin"] = pd.to_datetime(df["checkin"]).dt.date
     df["checkout"] = pd.to_datetime(df["checkout"]).dt.date
-    df["dias_para_checkin"] = (df["checkin"] - datetime.now().date()).dt.days
+    df["dias_para_checkin"] = df["checkin"].apply(lambda d: (d - datetime.now().date()).days)
     df["personalizacao_concluida"] = False
     df["link_chat"] = df["voucher"].apply(lambda v: f"{CHAT_BASE_URL}/?reserva_id={v}")
 
