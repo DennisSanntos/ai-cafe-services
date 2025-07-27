@@ -3,9 +3,6 @@ from app.tools.baserow import atualizar_linha
 import os
 
 class SalvarPreferenciasTool:
-    def __init__(self):
-        pass
-
     def run(self, preferencias: dict):
         """
         preferencias = {
@@ -18,24 +15,20 @@ class SalvarPreferenciasTool:
             'bolos_doces': [...]
         }
         """
-        from app.tools.baserow import buscar_por_voucher
-        reserva = buscar_por_voucher(preferencias.get("voucher"))
-        if not reserva or "id" not in reserva:
-            return {"erro": "Reserva não encontrada"}
-
-        # Atualizar linha com preferências
-        row_id = reserva["id"]
-        campos = {
-            "personalizacao_concluida": True,
+        # Prepara o payload para a tabela 622163 (preferencias_cafe)
+        payload = {
+            "voucher": preferencias.get("voucher"),
             "frutas": ", ".join(preferencias.get("frutas", [])),
             "paes_salgados": ", ".join(preferencias.get("paes_salgados", [])),
             "paes_sem_gluten": ", ".join(preferencias.get("paes_sem_gluten", [])),
             "acompanhamentos": ", ".join(preferencias.get("acompanhamentos", [])),
             "frios": ", ".join(preferencias.get("frios", [])),
-            "bolos_doces": ", ".join(preferencias.get("bolos_doces", []))
+            "bolos_doces": ", ".join(preferencias.get("bolos_doces", [])),
+            "data_resposta": datetime.now().isoformat()
         }
 
-        return atualizar_linha(row_id, campos)
+        # Salvar na tabela preferencial
+        return criar_linha(payload, table_id="622163")
 
 
 class CafeAgent(Agent):
