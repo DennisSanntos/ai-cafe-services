@@ -68,7 +68,7 @@
       {% for r in reservas %}
       <tr>
         <td>{{ r.apartamento }}</td>
-        <td>{{ r.nome_hospede }}</td>
+        <td>{{ r.nome_hospede_principal }}</td>
         <td>{{ r.checkin }}</td>
         <td>{% if r.personalizacao_concluida %}✅ Sim{% else %}❌ Não{% endif %}</td>
         <td>
