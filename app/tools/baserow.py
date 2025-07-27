@@ -19,7 +19,7 @@ def mapear_campos(dados: dict, mapa: dict) -> dict:
 
 def listar_reservas(limit=200):
     try:
-        r = requests.get(BASE_URL, headers=HEADERS, params={"size": limit})
+        r = requests.get(BASE_URL, headers=HEADERS, params={"size": limit, "user_field_names": "true"})
         if r.status_code == 200:
             return r.json()["results"]
         else:
