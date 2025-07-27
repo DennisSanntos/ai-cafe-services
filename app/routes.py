@@ -28,7 +28,9 @@ def ingestar():
     file2.save(path2)
 
     resultado = processar_planilhas(path1, path2)
-    return jsonify(resultado)
+    status = "ok" if resultado["erros"] == 0 else "parcial"
+    return redirect(f"/painel?upload={status}&enviados={resultado['enviados']}&erros={resultado['erros']}")
+
 
 @main.route('/chat')
 def chat():
