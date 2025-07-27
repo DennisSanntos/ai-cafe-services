@@ -1,5 +1,6 @@
 import os
 import requests
+from app.tools.field_map import FIELD_MAP_RESERVAS, FIELD_MAP_PREFERENCIAS
 
 BASEROW_TOKEN = os.getenv("BASEROW_API_TOKEN")
 TABLE_ID = os.getenv("BASEROW_TABLE_ID", "621432")
@@ -10,6 +11,12 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
+
+# 🔄 Mapeia campos legíveis → field_id
+def mapear_campos(dados: dict, mapa: dict) -> dict:
+    return {mapa[k]: v for k, v in dados.items() if k in mapa}
+
+
 def listar_reservas(limit=200):
     try:
         r = requests.get(BASE_URL, headers=HEADERS, params={"size": limit})
@@ -19,6 +26,7 @@ def listar_reservas(limit=200):
             return {"erro": r.text}
     except Exception as e:
         return {"erro": str(e)}
+
 
 def buscar_por_voucher(voucher):
     try:
@@ -33,18 +41,27 @@ def buscar_por_voucher(voucher):
     except Exception as e:
         return {"erro": str(e)}
 
-def atualizar_linha(row_id, campos: dict):
+
+def atualizar_linha(row_id, campos: dict, usar_mapa=True):
+    payload = mapear_campos(campos, FIELD_MAP_RESERVAS) if usar_mapa else campos
     try:
-        r = requests.patch(f"{BASE_URL}{row_id}/", headers=HEADERS, json=campos)
+        r = requests.patch(f"{BASE_URL}{row_id}/", headers=HEADERS, json=payload)
         if r.status_code in [200, 204]:
             return {"status": "ok"}
         return {"erro": r.text}
     except Exception as e:
         return {"erro": str(e)}
 
-def criar_linha(campos: dict, table_id=None):
+
+def criar_linha(campos: dict, table_id=None, usar_mapa=True):
     tid = table_id or TABLE_ID
     url = f"https://api.baserow.io/api/database/rows/table/{tid}/"
+
+    # Aplica o mapa correto automaticamente
+    if usar_mapa:
+        mapa = FIELD_MAP_PREFERENCIAS if tid == "622163" else FIELD_MAP_RESERVAS
+        campos = mapear_campos(campos, mapa)
+
     try:
         r = requests.post(url, headers=HEADERS, json=campos)
         if r.status_code in [200, 201]:
@@ -52,4 +69,3 @@ def criar_linha(campos: dict, table_id=None):
         return {"erro": r.text}
     except Exception as e:
         return {"erro": str(e)}
-
