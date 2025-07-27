@@ -2,98 +2,114 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Personalização do Café</title>
+  <title>Chat do Café da Manhã</title>
   <style>
     body {
       font-family: sans-serif;
-      background: #f0f0f0;
-      padding: 20px;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
     }
-    #chat {
+    .chat-container {
+      max-width: 600px;
+      margin: 40px auto;
       background: white;
       border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
       padding: 20px;
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .mensagem { margin-bottom: 12px; }
-    .usuario { text-align: right; color: #0056b3; }
-    .ia { text-align: left; color: #444; }
-    #entrada {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
+    h2 {
+      margin-top: 0;
+      text-align: center;
     }
-    input, button {
+    .mensagens {
+      border: 1px solid #ccc;
+      height: 300px;
+      overflow-y: auto;
       padding: 10px;
-      font-size: 1em;
+      background: #fff;
     }
-    input {
+    .mensagem {
+      margin-bottom: 10px;
+    }
+    .mensagem.usuario {
+      text-align: right;
+      color: blue;
+    }
+    .mensagem.bot {
+      text-align: left;
+      color: green;
+    }
+    .input-area {
+      margin-top: 10px;
+      display: flex;
+    }
+    input[type="text"] {
       flex: 1;
+      padding: 10px;
+      font-size: 16px;
     }
     button {
-      background: #28a745;
-      color: white;
-      border: none;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    button:hover {
-      background: #1e7e34;
+      padding: 10px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
+  <div class="chat-container">
+    <h2>Olá, <span id="nome-hospede">Hóspede</span> 👋</h2>
 
-<div id="chat">
-  <h2>Olá, {{ reserva.nome_hospede }}!</h2>
-  <p>Vamos personalizar seu café da manhã para o apartamento {{ reserva.apartamento }}.</p>
+    <div class="mensagens" id="chat-box">
+      <!-- mensagens serão inseridas aqui -->
+    </div>
 
-  <div id="mensagens"></div>
-
-  <div id="entrada">
-    <input id="mensagem" placeholder="Digite sua resposta..." />
-    <button onclick="enviar()">Enviar</button>
+    <div class="input-area">
+      <input type="text" id="input-msg" placeholder="Digite sua resposta...">
+      <button onclick="enviarMensagem()">Enviar</button>
+    </div>
   </div>
-</div>
 
-<script>
-  const reserva_id = "{{ reserva.voucher }}";
-  const mensagens = document.getElementById('mensagens');
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const reservaId = urlParams.get('reserva_id');
 
-  function adicionarMensagem(texto, classe) {
-    const div = document.createElement('div');
-    div.className = 'mensagem ' + classe;
-    div.innerText = texto;
-    mensagens.appendChild(div);
-    mensagens.scrollTop = mensagens.scrollHeight;
-  }
+    const chatBox = document.getElementById('chat-box');
+    const input = document.getElementById('input-msg');
+    const nomeHospedeEl = document.getElementById('nome-hospede');
 
-  async function enviar() {
-    const input = document.getElementById('mensagem');
-    const texto = input.value.trim();
-    if (!texto) return;
+    async function enviarMensagem() {
+      const texto = input.value.trim();
+      if (!texto) return;
+      adicionarMensagem("usuario", texto);
+      input.value = '';
 
-    adicionarMensagem(texto, 'usuario');
-    input.value = '';
+      const resposta = await fetch('/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({reserva_id: reservaId, mensagem: texto})
+      }).then(r => r.json());
 
-    const resp = await fetch('/chat/ia', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reserva_id: reserva_id, mensagem: texto })
-    });
+      adicionarMensagem("bot", resposta.resposta || "Desculpe, não entendi.");
+    }
 
-    const data = await resp.json();
-    adicionarMensagem(data.resposta, 'ia');
-  }
+    function adicionarMensagem(tipo, texto) {
+      const div = document.createElement('div');
+      div.className = 'mensagem ' + tipo;
+      div.textContent = texto;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
 
-  // Mensagem de boas-vindas inicial
-  window.onload = () => {
-    adicionarMensagem("😄 Olá! Sou o assistente do café. Vamos começar?", "ia");
-  };
-</script>
+    async function carregarContexto() {
+      const resp = await fetch(`/chat/contexto?reserva_id=${reservaId}`);
+      const dados = await resp.json();
+      if (dados && dados.nome) {
+        nomeHospedeEl.textContent = dados.nome;
+      }
+    }
 
+    carregarContexto();
+  </script>
 </body>
 </html>
+
