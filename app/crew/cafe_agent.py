@@ -2,6 +2,9 @@ from crewai import Agent, Task
 from app.tools.baserow import atualizar_linha
 import os
 
+from app.tools.baserow import criar_linha
+from datetime import datetime
+
 class SalvarPreferenciasTool:
     def run(self, preferencias: dict):
         """
@@ -15,7 +18,6 @@ class SalvarPreferenciasTool:
             'bolos_doces': [...]
         }
         """
-        # Prepara o payload para a tabela 622163 (preferencias_cafe)
         payload = {
             "voucher": preferencias.get("voucher"),
             "frutas": ", ".join(preferencias.get("frutas", [])),
@@ -27,8 +29,7 @@ class SalvarPreferenciasTool:
             "data_resposta": datetime.now().isoformat()
         }
 
-        # Salvar na tabela preferencial
-        return criar_linha(payload, table_id="622163")
+        return criar_linha(payload, table_id="622163", usar_mapa=True)
 
 
 class CafeAgent(Agent):
