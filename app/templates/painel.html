@@ -1,1 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Painel Administrativo - Café</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f9f9f9; }
+    .tabs { display: flex; background: #007bff; }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 15px;
+      color: white;
+      cursor: pointer;
+    }
+    .tab.active { background: #0056b3; }
+    .content { padding: 20px; display: none; }
+    .content.active { display: block; }
+    table { width: 100%; border-collapse: collapse; background: white; margin-top: 20px; }
+    th, td { padding: 12px; border: 1px solid #ddd; }
+    th { background: #007bff; color: white; }
+    button.copy-btn {
+      background: #28a745; color: white; border: none;
+      padding: 6px 10px; border-radius: 5px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
 
+<div class="tabs">
+  <div class="tab active" onclick="showTab('upload')">📤 Upload</div>
+  <div class="tab" onclick="showTab('reservas')">📋 Reservas</div>
+  <div class="tab" onclick="showTab('chat')">💬 Chat</div>
+</div>
+
+<div id="upload" class="content active">
+  <h2>📤 Upload das planilhas do HITS</h2>
+  <form action="/ingest" method="post" enctype="multipart/form-data">
+    <label>Reservas no período (.xlsx):</label><br>
+    <input type="file" name="arquivo_periodo" accept=".xlsx" required><br><br>
+
+    <label>Reservas por apartamento (.xlsx):</label><br>
+    <input type="file" name="arquivo_apto" accept=".xlsx" required><br><br>
+
+    <button type="submit">Enviar e Processar</button>
+  </form>
+</div>
+
+<div id="reservas" class="content">
+  <h2>📋 Lista de Reservas</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Quarto</th>
+        <th>Hóspede</th>
+        <th>Check-in</th>
+        <th>Personalizado?</th>
+        <th>Link do Chat</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reservas %}
+      <tr>
+        <td>{{ r.apartamento }}</td>
+        <td>{{ r.nome_hospede }}</td>
+        <td>{{ r.checkin }}</td>
+        <td>{% if r.personalizacao_concluida %}✅ Sim{% else %}❌ Não{% endif %}</td>
+        <td>
+          <input type="text" value="{{ r.link_chat }}" id="link{{ loop.index }}" readonly style="width: 80%;">
+          <button class="copy-btn" onclick="copiar('link{{ loop.index }}')">Copiar</button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div id="chat" class="content">
+  <h2>💬 Acesso Manual ao Chat</h2>
+  <p>Insira o voucher da reserva:</p>
+  <form action="/chat" method="get" target="_blank">
+    <input type="text" name="reserva_id" placeholder="Ex: 1941" required>
+    <button type="submit">Abrir Chat</button>
+  </form>
+</div>
+
+<script>
+function showTab(tabId) {
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
+}
+
+function copiar(id) {
+  const campo = document.getElementById(id);
+  campo.select();
+  campo.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+  alert("Link copiado!");
+}
+</script>
+
+</body>
+</html>
