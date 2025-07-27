@@ -1,35 +1,42 @@
-from crewai import Agent, Task
-from app.tools.baserow import atualizar_linha
-import os
-
-from app.tools.baserow import criar_linha
+from langchain.tools import BaseTool
+from typing import Optional, Type
+from pydantic import BaseModel
 from datetime import datetime
+from app.tools.baserow import criar_linha
 
-class SalvarPreferenciasTool:
-    def run(self, preferencias: dict):
-        """
-        preferencias = {
-            'voucher': '1941',
-            'frutas': [...],
-            'paes_salgados': [...],
-            'paes_sem_gluten': [...],
-            'acompanhamentos': [...],
-            'frios': [...],
-            'bolos_doces': [...]
-        }
-        """
+# Schema para validação de entrada
+class PreferenciasInput(BaseModel):
+    voucher: str
+    frutas: Optional[list[str]] = []
+    paes_salgados: Optional[list[str]] = []
+    paes_sem_gluten: Optional[list[str]] = []
+    acompanhamentos: Optional[list[str]] = []
+    frios: Optional[list[str]] = []
+    bolos_doces: Optional[list[str]] = []
+
+class SalvarPreferenciasTool(BaseTool):
+    name = "salvar_preferencias"
+    description = "Salva as preferências do hóspede no Baserow"
+    args_schema: Type[BaseModel] = PreferenciasInput
+
+    def _run(self, voucher, frutas=None, paes_salgados=None, paes_sem_gluten=None,
+             acompanhamentos=None, frios=None, bolos_doces=None):
         payload = {
-            "voucher": preferencias.get("voucher"),
-            "frutas": ", ".join(preferencias.get("frutas", [])),
-            "paes_salgados": ", ".join(preferencias.get("paes_salgados", [])),
-            "paes_sem_gluten": ", ".join(preferencias.get("paes_sem_gluten", [])),
-            "acompanhamentos": ", ".join(preferencias.get("acompanhamentos", [])),
-            "frios": ", ".join(preferencias.get("frios", [])),
-            "bolos_doces": ", ".join(preferencias.get("bolos_doces", [])),
+            "voucher": voucher,
+            "frutas": ", ".join(frutas or []),
+            "paes_salgados": ", ".join(paes_salgados or []),
+            "paes_sem_gluten": ", ".join(paes_sem_gluten or []),
+            "acompanhamentos": ", ".join(acompanhamentos or []),
+            "frios": ", ".join(frios or []),
+            "bolos_doces": ", ".join(bolos_doces or []),
             "data_resposta": datetime.now().isoformat()
         }
 
         return criar_linha(payload, table_id="622163", usar_mapa=True)
+
+    def _arun(self, *args, **kwargs):
+        raise NotImplementedError("Async não suportado")
+
 
 
 class CafeAgent(Agent):
