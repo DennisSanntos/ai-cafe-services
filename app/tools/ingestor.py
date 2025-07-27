@@ -50,21 +50,21 @@ def processar_planilhas(path_periodo, path_apartamentos):
 
     enviados, erros = 0, 0
 
-    for _, row in df.iterrows():
-    payload = {}
-    for k in campos:
-        if pd.notna(row[k]):
-            valor = row[k]
-            if isinstance(valor, (datetime, pd.Timestamp)):
-                valor = valor.date().isoformat()
-            elif isinstance(valor, datetime.date):
-                valor = valor.isoformat()
-            payload[k] = valor
+        for _, row in df.iterrows():
+        payload = {}
+        for k in campos:
+            if pd.notna(row[k]):
+                valor = row[k]
+                if isinstance(valor, (datetime, pd.Timestamp)):
+                    valor = valor.date().isoformat()
+                elif isinstance(valor, datetime.date):
+                    valor = valor.isoformat()
+                payload[k] = valor
 
-    resultado = criar_linha(payload, table_id="621432", usar_mapa=True)
+        resultado = criar_linha(payload, table_id="621432", usar_mapa=True)
 
-    if isinstance(resultado, dict) and resultado.get("erro"):
-        print(f"❌ Erro no voucher {row.get('voucher', 'N/A')}: {resultado['erro']}")
-        erros += 1
-    else:
-        enviados += 1
+        if isinstance(resultado, dict) and resultado.get("erro"):
+            print(f"❌ Erro no voucher {row.get('voucher', 'N/A')}: {resultado['erro']}")
+            erros += 1
+        else:
+            enviados += 1
