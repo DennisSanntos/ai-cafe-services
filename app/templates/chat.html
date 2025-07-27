@@ -83,7 +83,7 @@
       adicionarMensagem("usuario", texto);
       input.value = '';
 
-      const resposta = await fetch('/chat', {
+      const resposta = await fetch('/chat/ia', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({reserva_id: reservaId, mensagem: texto})
