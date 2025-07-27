@@ -70,4 +70,7 @@ def chat_ia():
 
 @main.route('/painel')
 def painel():
-    return render_template("painel.html")
+    from app.tools.baserow import listar_reservas
+    reservas = listar_reservas()
+    return render_template("painel.html", reservas=reservas)
+
