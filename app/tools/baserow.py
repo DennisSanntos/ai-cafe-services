@@ -42,9 +42,11 @@ def atualizar_linha(row_id, campos: dict):
     except Exception as e:
         return {"erro": str(e)}
 
-def criar_linha(campos: dict):
+def criar_linha(campos: dict, table_id=None):
+    tid = table_id or TABLE_ID
+    url = f"https://api.baserow.io/api/database/rows/table/{tid}/"
     try:
-        r = requests.post(BASE_URL, headers=HEADERS, json=campos)
+        r = requests.post(url, headers=HEADERS, json=campos)
         if r.status_code in [200, 201]:
             return r.json()
         return {"erro": r.text}
