@@ -7,6 +7,7 @@ from app.tools.field_map import FIELD_MAP_RESERVAS
 
 CHAT_BASE_URL = os.getenv("CHAT_BASE_URL", "https://chat.seusistema.com")
 
+
 def processar_planilhas(path_periodo, path_apartamentos):
     # Leitura das planilhas
     df_periodo = pd.read_excel(path_periodo, sheet_name="Reservas")
@@ -50,7 +51,7 @@ def processar_planilhas(path_periodo, path_apartamentos):
 
     enviados, erros = 0, 0
 
-        for _, row in df.iterrows():
+    for _, row in df.iterrows():
         payload = {}
         for k in campos:
             if pd.notna(row[k]):
@@ -68,3 +69,10 @@ def processar_planilhas(path_periodo, path_apartamentos):
             erros += 1
         else:
             enviados += 1
+
+    return {
+        "status": "concluido",
+        "enviados": enviados,
+        "erros": erros,
+        "total": len(df)
+    }
