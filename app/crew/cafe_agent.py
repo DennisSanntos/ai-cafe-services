@@ -1,43 +1,34 @@
 from crewai import Agent
-from langchain.tools import BaseTool
-from typing import Optional, Type
-from pydantic import BaseModel
+from crewai_tools import tool
 from datetime import datetime
 from app.tools.baserow import criar_linha
 
-# Schema para validação de entrada
-class PreferenciasInput(BaseModel):
-    voucher: str
-    frutas: Optional[list[str]] = []
-    paes_salgados: Optional[list[str]] = []
-    paes_sem_gluten: Optional[list[str]] = []
-    acompanhamentos: Optional[list[str]] = []
-    frios: Optional[list[str]] = []
-    bolos_doces: Optional[list[str]] = []
+# Define a Tool usando apenas o decorator do CrewAI
+@tool
+def salvar_preferencias(
+    voucher: str,
+    frutas: list[str] = [],
+    paes_salgados: list[str] = [],
+    paes_sem_gluten: list[str] = [],
+    acompanhamentos: list[str] = [],
+    frios: list[str] = [],
+    bolos_doces: list[str] = []
+) -> str:
+    """
+    Salva as preferências do hóspede no banco de dados.
+    """
+    payload = {
+        "voucher": voucher,
+        "frutas": ", ".join(frutas),
+        "paes_salgados": ", ".join(paes_salgados),
+        "paes_sem_gluten": ", ".join(paes_sem_gluten),
+        "acompanhamentos": ", ".join(acompanhamentos),
+        "frios": ", ".join(frios),
+        "bolos_doces": ", ".join(bolos_doces),
+        "data_resposta": datetime.now().isoformat()
+    }
 
-class SalvarPreferenciasTool(BaseTool):
-    name: str = "salvar_preferencias"
-    description: str = "Salva as preferências do hóspede no Baserow"
-    args_schema: Type[BaseModel] = PreferenciasInput
-
-    def _run(self, voucher, frutas=None, paes_salgados=None, paes_sem_gluten=None,
-             acompanhamentos=None, frios=None, bolos_doces=None):
-        payload = {
-            "voucher": voucher,
-            "frutas": ", ".join(frutas or []),
-            "paes_salgados": ", ".join(paes_salgados or []),
-            "paes_sem_gluten": ", ".join(paes_sem_gluten or []),
-            "acompanhamentos": ", ".join(acompanhamentos or []),
-            "frios": ", ".join(frios or []),
-            "bolos_doces": ", ".join(bolos_doces or []),
-            "data_resposta": datetime.now().isoformat()
-        }
-
-        return criar_linha(payload, table_id="622163", usar_mapa=True)
-
-    def _arun(self, *args, **kwargs):
-        raise NotImplementedError("Async não suportado")
-
+    return criar_linha(payload, table_id="622163", usar_mapa=True)
 
 
 class CafeAgent(Agent):
@@ -53,15 +44,13 @@ class CafeAgent(Agent):
         """
         prompt = self._gerar_prompt(contexto_reserva)
 
-        tool = SalvarPreferenciasTool()
-
         super().__init__(
             role="Agente de Café da Manhã",
             goal="Personalizar o café da manhã para o hóspede com base nas preferências",
             backstory="Você é um concierge digital especializado em entender preferências alimentares com empatia e clareza.",
             verbose=True,
             allow_delegation=False,
-            tools=[tool]
+            tools=[salvar_preferencias]
         )
         self.prompt = prompt
 
@@ -79,10 +68,8 @@ Coleta obrigatória:
 
 O estilo da conversa deve ser amigável, acolhedor e eficiente. Sempre confirme cada etapa.
 
-Ao final, use a Tool `SalvarPreferenciasTool` com um dicionário contendo as escolhas. Não invente valores.
+Ao final, use a Tool `salvar_preferencias` com um dicionário contendo as escolhas. Não invente valores.
 
 Identificador da reserva: {ctx.get("voucher")}
 Check-in: {ctx.get("checkin")} – Checkout: {ctx.get("checkout")}
 """
-
-
