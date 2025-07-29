@@ -118,7 +118,7 @@ def chat_ia():
     else:
         resposta = crew.chat(msg_usuario)
 
-    return jsonify({"resposta": resposta})
+    return jsonify({"resposta": str(resposta.output) if hasattr(resposta, 'output') else str(resposta)})
 
     # Detecta se é resposta de checkbox (JSON)
     try:
