@@ -5,7 +5,7 @@ import os
 from app.tools.baserow import criar_linha
 from app.tools.field_map import FIELD_MAP_RESERVAS
 
-CHAT_BASE_URL = os.getenv("CHAT_BASE_URL", "https://chat.seusistema.com")
+CHAT_BASE_URL = os.getenv("CHAT_BASE_URL", "https://ai-cafe-services.onrender.com")
 
 
 def processar_planilhas(path_periodo, path_apartamentos):
@@ -38,7 +38,7 @@ def processar_planilhas(path_periodo, path_apartamentos):
     df["checkout"] = pd.to_datetime(df["checkout"]).dt.date
     df["dias_para_checkin"] = df["checkin"].apply(lambda d: (d - datetime.now().date()).days)
     df["personalizacao_concluida"] = False
-    df["link_chat"] = df["voucher"].apply(lambda v: f"{CHAT_BASE_URL}/?reserva_id={v}")
+    df["link_chat"] = df["voucher"].apply(lambda v: f"{CHAT_BASE_URL}/chat?reserva_id={v}")
 
     # Campos esperados
     campos = [
