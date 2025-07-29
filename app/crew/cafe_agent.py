@@ -1,3 +1,4 @@
+from crewai import Agent
 from langchain.tools import BaseTool
 from typing import Optional, Type
 from pydantic import BaseModel
