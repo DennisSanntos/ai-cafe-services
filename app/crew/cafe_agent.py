@@ -15,8 +15,8 @@ class PreferenciasInput(BaseModel):
     bolos_doces: Optional[list[str]] = []
 
 class SalvarPreferenciasTool(BaseTool):
-    name = "salvar_preferencias"
-    description = "Salva as preferências do hóspede no Baserow"
+    name: str = "salvar_preferencias"
+    description: str = "Salva as preferências do hóspede no Baserow"
     args_schema: Type[BaseModel] = PreferenciasInput
 
     def _run(self, voucher, frutas=None, paes_salgados=None, paes_sem_gluten=None,
