@@ -33,15 +33,6 @@ def salvar_preferencias(
 
 class CafeAgent(Agent):
     def __init__(self, contexto_reserva: dict):
-        """
-        contexto_reserva = {
-            'nome': 'João Silva',
-            'voucher': '1941',
-            'quarto': 'UH 22',
-            'checkin': '2025-07-28',
-            'checkout': '2025-07-30'
-        }
-        """
         prompt = self._gerar_prompt(contexto_reserva)
 
         super().__init__(
@@ -50,9 +41,9 @@ class CafeAgent(Agent):
             backstory="Você é um concierge digital especializado em entender preferências alimentares com empatia e clareza.",
             verbose=True,
             allow_delegation=False,
-            tools=[salvar_preferencias]
+            tools=[salvar_preferencias],
+            prompt=prompt  # ✅ aqui!
         )
-        self.prompt = prompt
 
     def _gerar_prompt(self, ctx):
         return f"""
@@ -73,3 +64,4 @@ Ao final, use a Tool `salvar_preferencias` com um dicionário contendo as escolh
 Identificador da reserva: {ctx.get("voucher")}
 Check-in: {ctx.get("checkin")} – Checkout: {ctx.get("checkout")}
 """
+
