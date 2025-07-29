@@ -5,5 +5,5 @@ requests
 pandas
 openpyxl
 crewai==0.140.0
-crewai-tools
+crewai-tools==0.0.28
 tiktoken
