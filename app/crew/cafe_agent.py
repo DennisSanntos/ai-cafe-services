@@ -1,5 +1,5 @@
 from crewai import Agent
-from crewai_tools import tool
+from crewai.tools import tool
 from datetime import datetime
 from app.tools.baserow import criar_linha
 
