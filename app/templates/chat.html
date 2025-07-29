@@ -63,7 +63,7 @@
       <!-- mensagens serão inseridas aqui -->
     </div>
 
-    <div class="input-area">
+    <div class="input-area" id="input-area">
       <input type="text" id="input-msg" placeholder="Digite sua resposta...">
       <button onclick="enviarMensagem()">Enviar</button>
     </div>
@@ -76,20 +76,22 @@
     const chatBox = document.getElementById('chat-box');
     const input = document.getElementById('input-msg');
     const nomeHospedeEl = document.getElementById('nome-hospede');
+    const inputArea = document.getElementById('input-area');
 
-    async function enviarMensagem() {
-      const texto = input.value.trim();
+    async function enviarMensagem(textoManual = null) {
+      const texto = textoManual || input.value.trim();
       if (!texto) return;
+
       adicionarMensagem("usuario", texto);
       input.value = '';
 
       const resposta = await fetch('/chat/ia', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({reserva_id: reservaId, mensagem: texto})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reserva_id: reservaId, mensagem: texto })
       }).then(r => r.json());
 
-      adicionarMensagem("bot", resposta.resposta || "Desculpe, não entendi.");
+      renderMensagemBot(resposta.resposta || "Desculpe, não entendi.");
     }
 
     function adicionarMensagem(tipo, texto) {
@@ -98,6 +100,69 @@
       div.textContent = texto;
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function renderMensagemBot(msg) {
+      // Detecta mensagem anotada
+      if (msg.startsWith("::checkbox::")) {
+        const campo = extrairCampo(msg, "campo");
+        const texto = extrairCampo(msg, "mensagem");
+        const opcoes = JSON.parse(extrairCampo(msg, "opcoes"));
+
+        const container = document.createElement('div');
+        container.className = 'mensagem bot';
+        container.innerHTML = `<p><strong>${texto}</strong></p>`;
+
+        const form = document.createElement('form');
+        form.dataset.campo = campo;
+
+        opcoes.forEach(op => {
+          const id = campo + '-' + op.replace(/\s+/g, '_');
+          form.innerHTML += `
+            <label>
+              <input type="checkbox" name="${campo}" value="${op}"> ${op}
+            </label><br/>
+          `;
+        });
+
+        form.innerHTML += `<button type="submit">Confirmar</button>`;
+        form.addEventListener('submit', handleCheckboxResposta);
+
+        container.appendChild(form);
+        chatBox.appendChild(container);
+        chatBox.scrollTop = chatBox.scrollHeight;
+      } else {
+        adicionarMensagem("bot", msg);
+      }
+    }
+
+    function extrairCampo(texto, campo) {
+      const regex = new RegExp(`${campo}=(.*)`);
+      const match = texto.match(regex);
+      if (!match) return '';
+      const valor = match[1].trim();
+      if (valor.startsWith("[") && valor.endsWith("]")) return valor;
+      return valor.replace(/^"|"$/g, '');
+    }
+
+    async function handleCheckboxResposta(event) {
+      event.preventDefault();
+      const form = event.target;
+      const campo = form.dataset.campo;
+      const selecionados = [...form.querySelectorAll(`input[name="${campo}"]:checked`)].map(i => i.value);
+
+      adicionarMensagem("usuario", selecionados.join(", "));
+
+      const resposta = await fetch('/chat/ia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reserva_id: reservaId,
+          mensagem: JSON.stringify({ campo: campo, valor: selecionados })
+        })
+      }).then(r => r.json());
+
+      renderMensagemBot(resposta.resposta || "OK");
     }
 
     async function carregarContexto() {
@@ -112,4 +177,3 @@
   </script>
 </body>
 </html>
-
