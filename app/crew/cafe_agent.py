@@ -28,7 +28,23 @@ def salvar_preferencias(
         "data_resposta": datetime.now().isoformat()
     }
 
-    return criar_linha(payload, table_id="622163", usar_mapa=True)
+    try:
+        print("[DEBUG] Enviando payload para criar_linha:")
+        print(payload)
+
+        resultado = criar_linha(payload, table_id="622163", usar_mapa=True)
+
+        print("[DEBUG] Resultado de criar_linha:")
+        print(resultado)
+
+        if isinstance(resultado, dict) and resultado.get("id"):
+            return "Preferências registradas com sucesso! ☕ Obrigado!"
+        else:
+            return f"Erro ao salvar preferências: {resultado}"
+    except Exception as e:
+        print("[ERRO] Exceção ao salvar preferências:", str(e))
+        return f"Ocorreu um erro interno: {e}"
+
 
 
 class CafeAgent(Agent):
