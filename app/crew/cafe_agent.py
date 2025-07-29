@@ -42,11 +42,11 @@ class CafeAgent(Agent):
             verbose=True,
             allow_delegation=False,
             tools=[salvar_preferencias],
-            prompt=prompt  # ✅ aqui!
+            prompt=prompt
         )
 
-def _gerar_prompt(self, ctx):
-    return f"""
+    def _gerar_prompt(self, ctx):
+        return f"""
         Você é um concierge virtual especializado em personalizar o café da manhã do hóspede {ctx.get("nome")} (quarto {ctx.get("quarto")}).
 
         Seu objetivo é conduzir uma conversa acolhedora, clara e guiada com o hóspede, **coletando todas as preferências** de forma estruturada.  
