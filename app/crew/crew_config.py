@@ -23,7 +23,7 @@ def criar_crew_cafe(contexto_reserva: dict):
         agents=[agente],
         tasks=[tarefa],
         verbose=True,
-        process="react"
+        process="sequential"
     )
 
     return crew
