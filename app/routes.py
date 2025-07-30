@@ -5,7 +5,9 @@ from datetime import datetime
 
 from app.tools.ingestor import processar_planilhas
 from app.tools.baserow import buscar_por_voucher, listar_reservas
-from app.crew.crew_config import criar_crew_cafe
+from app.chat.chat_cafe import iniciar_fluxo, processar_mensagem
+from app.tools.reservas import get_contexto_reserva
+
 
 main = Blueprint('main', __name__)
 agentes_chat = {}  # memória temporária para sessões
@@ -87,38 +89,19 @@ def obter_contexto():
     })
 
 # CHAT IA
-@main.route('/chat/ia', methods=['POST'])
+@app.route("/chat/ia", methods=["POST"])
 def chat_ia():
-    data = request.get_json()
-    reserva_id = data.get("reserva_id")
-    msg_usuario = data.get("mensagem", "").strip().lower()
+    dados = request.get_json()
+    reserva_id = dados.get("reserva_id")
+    mensagem = dados.get("mensagem", "")
 
-    if not reserva_id or not msg_usuario:
-        return jsonify({"erro": "Campos obrigatórios: reserva_id, mensagem"}), 400
-
-    reserva = buscar_por_voucher(reserva_id)
-    if not reserva:
-        return jsonify({"erro": "Reserva não encontrada"}), 404
-
-    if reserva_id not in agentes_chat:
-        contexto = {
-            "nome": reserva.get("nome_hospede_principal"),
-            "voucher": reserva.get("voucher"),
-            "quarto": reserva.get("apartamento"),
-            "checkin": reserva.get("checkin"),
-            "checkout": reserva.get("checkout")
-        }
-        agentes_chat[reserva_id] = criar_crew_cafe(contexto)
-
-    crew = agentes_chat[reserva_id]
-
-    if msg_usuario in ["vamos", "vamos começar", "ok", "sim", "começar", "iniciar"]:
-        resultado = crew.kickoff(inputs={"mensagem": msg_usuario})
-        return jsonify({"resposta": str(resultado.output)})
+    if mensagem == "__inicio__":
+        contexto = get_contexto_reserva(reserva_id)
+        resposta = iniciar_fluxo(reserva_id, contexto)
     else:
-        nome = reserva.get("nome_hospede_principal", "hóspede")
-        texto = f"Olá {nome}, tudo bem? Sou o agente de café da manhã do Duke Beach Hotel e estou aqui para ajudar você a personalizar essa experiência.\n\nQuando estiver pronto, me diga \"vamos começar\"."
-        return jsonify({"resposta": texto})
+        resposta = processar_mensagem(reserva_id, mensagem)
+
+    return jsonify({"resposta": resposta})
 
 
     # 🔸 Demais interações, passa para o agente
