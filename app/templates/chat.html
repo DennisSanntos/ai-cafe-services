@@ -137,13 +137,16 @@
     }
 
     function extrairCampo(texto, campo) {
-      const regex = new RegExp(`${campo}=(.*)`);
-      const match = texto.match(regex);
-      if (!match) return '';
-      const valor = match[1].trim();
-      if (valor.startsWith("[") && valor.endsWith("]")) return valor;
-      return valor.replace(/^"|"$/g, '');
-    }
+  const regex = new RegExp(`${campo}=([^\\n]*)`);
+  const match = texto.match(regex);
+  if (!match) return '';
+  try {
+    return JSON.parse(match[1]);  // Se for um array (como opcoes)
+  } catch {
+    return match[1];  // Texto simples como mensagem ou campo
+  }
+}
+
 
     async function handleCheckboxResposta(event) {
       event.preventDefault();
