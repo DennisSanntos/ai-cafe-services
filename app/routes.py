@@ -123,7 +123,7 @@ def chat_ia():
         return jsonify({"resposta": saudacao})
 
     # 🔸 Demais interações, passa para o agente
-    resultado = crew.kickoff(inputs=msg_usuario)
+    resultado = crew.kickoff(inputs={"mensagem": msg_usuario})
     return jsonify({"resposta": str(resultado.output)})
 
 
