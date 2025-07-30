@@ -175,18 +175,21 @@
 
     carregarContexto().then(() => {
   // 🔥 Envia mensagem vazia para iniciar o fluxo
-  fetch('/chat/ia', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({reserva_id: reservaId, mensagem: ""})
+  fetch("/chat/ia", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    reserva_id: reservaId,
+    mensagem: "__inicio__"
   })
-  .then(r => r.json())
-  .then(resposta => {
-    if (resposta.resposta) {
-      adicionarMensagem("bot", resposta.resposta);
-    }
-  });
+})
+.then(res => res.json())
+.then(data => {
+  if (data.resposta) {
+    renderizarMensagemAgente(data.resposta);
+  }
 });
+
     
   </script>
 </body>
