@@ -8,9 +8,7 @@ from app.tools.baserow import buscar_por_voucher, listar_reservas
 from app.chat.chat_cafe import iniciar_fluxo, processar_mensagem
 from app.tools.reservas import get_contexto_reserva
 
-
 main = Blueprint('main', __name__)
-agentes_chat = {}  # memória temporária para sessões
 respostas_parciais = {}  # reserva_id -> respostas acumuladas
 
 CAMPOS_ORDEM = [
@@ -29,7 +27,7 @@ OPCOES_PADRAO = {
     "acompanhamentos": ["Manteiga", "Requeijão", "Geleia", "Mel", "Nenhum"],
     "frios": ["Queijo branco", "Presunto", "Peito de peru", "Queijo prato", "Sem frios"],
     "bolos_doces": ["Bolo de cenoura", "Pão doce", "Rosquinha", "Sem doces"]
-}
+]
 
 # HOME
 @main.route('/')
@@ -88,58 +86,43 @@ def obter_contexto():
         "voucher": dados.get("voucher")
     })
 
-# CHAT IA
-@app.route("/chat/ia", methods=["POST"])
+# CHAT IA SIMPLIFICADO
+@main.route("/chat/ia", methods=["POST"])
 def chat_ia():
     dados = request.get_json()
     reserva_id = dados.get("reserva_id")
     mensagem = dados.get("mensagem", "")
 
+    if reserva_id not in respostas_parciais:
+        respostas_parciais[reserva_id] = {}
+
+    buffer = respostas_parciais[reserva_id]
+
     if mensagem == "__inicio__":
-        contexto = get_contexto_reserva(reserva_id)
-        resposta = iniciar_fluxo(reserva_id, contexto)
-    else:
-        resposta = processar_mensagem(reserva_id, mensagem)
+        return jsonify({"resposta": gerar_mensagem_checkbox(CAMPOS_ORDEM[0], OPCOES_PADRAO[CAMPOS_ORDEM[0]])})
 
-    return jsonify({"resposta": resposta})
-
-
-    # 🔸 Demais interações, passa para o agente
-    resultado = crew.kickoff(inputs={"mensagem": msg_usuario})
-    return jsonify({"resposta": str(resultado.output)})
-
-
-    # Detecta se é resposta de checkbox (JSON)
+    # Detecta se é resposta de checkbox
     try:
-        dados = json.loads(msg_usuario)
-        if isinstance(dados, dict) and "campo" in dados and "valor" in dados:
-            campo = dados["campo"]
-            buffer[campo] = dados["valor"]
+        payload = json.loads(mensagem)
+        if isinstance(payload, dict) and "campo" in payload and "valor" in payload:
+            buffer[payload["campo"]] = payload["valor"]
     except:
-        pass  # mensagem comum, ignora
+        pass
 
     # Se já respondeu tudo
     if all(c in buffer for c in CAMPOS_ORDEM):
-        agente = agentes_chat[reserva_id].agents[0]
-        salvar_tool = agente.tools[0]
-
-        resultado = salvar_tool.run({
-            "voucher": reserva_id,
-            **buffer
-        })
-
+        from app.chat.chat_cafe import salvar_preferencias
+        salvar_preferencias(voucher=reserva_id, **buffer)
         return jsonify({"resposta": "Preferências registradas com sucesso! ☕ Obrigado!"})
 
     # Próxima pergunta
     for campo in CAMPOS_ORDEM:
         if campo not in buffer:
-            opcoes = OPCOES_PADRAO[campo]
-            pergunta = gerar_mensagem_checkbox(campo, opcoes)
-            return jsonify({"resposta": pergunta})
+            return jsonify({"resposta": gerar_mensagem_checkbox(campo, OPCOES_PADRAO[campo])})
 
     return jsonify({"resposta": "Tudo certo."})
 
-# GERA A MENSAGEM ESPECIAL DE CHECKBOX
+# GERA MENSAGEM COM CHECKBOX
 def gerar_mensagem_checkbox(campo, opcoes):
     return f"""::checkbox::
 campo={campo}
