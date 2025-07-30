@@ -93,8 +93,8 @@ def chat_ia():
     reserva_id = data.get("reserva_id")
     msg_usuario = data.get("mensagem")
 
-    if not reserva_id:
-        return jsonify({"erro": "Campos obrigatórios: reserva_id"}), 400
+    if not reserva_id or msg_usuario is None:
+        return jsonify({"erro": "Campos obrigatórios: reserva_id, mensagem"}), 400
 
     reserva = buscar_por_voucher(reserva_id)
     if not reserva:
@@ -112,13 +112,20 @@ def chat_ia():
 
     crew = agentes_chat[reserva_id]
 
-    # 🔥 Se não há mensagem do usuário, inicia a conversa automaticamente
-    if not msg_usuario.strip():
-        resposta = crew.kickoff()
-    else:
-        resposta = crew.chat(msg_usuario)
+    # 🔸 Caso especial: mensagem de abertura do sistema
+    if msg_usuario == "__inicio__":
+        saudacao = (
+            f"Olá {reserva.get('nome_hospede_principal')} 👋\n"
+            f"Sou o assistente do café da manhã do Duke Beach Hotel ☕\n"
+            f"Estou aqui para te ajudar a montar um café da manhã personalizado!\n\n"
+            f"Vamos começar?"
+        )
+        return jsonify({"resposta": saudacao})
 
-    return jsonify({"resposta": str(resposta.output) if hasattr(resposta, 'output') else str(resposta)})
+    # 🔸 Demais interações, passa para o agente
+    resultado = crew.kickoff(inputs=msg_usuario)
+    return jsonify({"resposta": str(resultado.output)})
+
 
     # Detecta se é resposta de checkbox (JSON)
     try:
