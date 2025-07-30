@@ -37,13 +37,14 @@ PERGUNTAS = [
     }
 ]
 
-def iniciar_fluxo(reserva_id: str, contexto: dict) -> str:
-    estado_chat[reserva_id] = {
-        "etapa": 0,
-        "respostas": {},
-        "contexto": contexto
-    }
-    return f"Olá {contexto.get('nome')}, tudo bem? Sou o agente de café da manhã do Duke Beach Hotel e estou aqui para te ajudar a personalizar essa experiência deliciosa. Vamos começar!"
+def iniciar_fluxo(reserva_id, contexto):
+    campo = "frutas"
+    opcoes = ["Mamão", "Melancia", "Banana", "Abacaxi", "Maçã", "Sem preferência"]
+    return f"""::checkbox:: 
+campo={campo} 
+opcoes={json.dumps(opcoes, ensure_ascii=False)} 
+mensagem=Quais suas preferências para {campo}?"""
+
 
 def processar_mensagem(reserva_id: str, mensagem: str) -> str:
     if reserva_id not in estado_chat:
