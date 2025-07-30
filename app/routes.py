@@ -126,5 +126,7 @@ def chat_ia():
 def gerar_mensagem_checkbox(campo, opcoes):
     return f"""::checkbox::
 campo={campo}
-opcoes={json.dumps(opcoes)}
+opcoes={json.dumps(opcoes, ensure_ascii=False)}
 mensagem=Quais suas preferências para {campo.replace('_', ' ')}?"""
+
+
