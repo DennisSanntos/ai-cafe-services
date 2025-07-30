@@ -189,7 +189,7 @@
   .then(res => res.json())
   .then(data => {
     if (data.resposta) {
-      adicionarMensagem("bot", data.resposta);  // ✅ esta é a função correta no seu código atual
+      adicionarMensagem(data.resposta);  // ✅ esta é a função correta no seu código atual
     }
   });
 });
