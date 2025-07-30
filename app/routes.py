@@ -91,9 +91,9 @@ def obter_contexto():
 def chat_ia():
     data = request.get_json()
     reserva_id = data.get("reserva_id")
-    msg_usuario = data.get("mensagem")
+    msg_usuario = data.get("mensagem", "").strip().lower()
 
-    if not reserva_id or msg_usuario is None:
+    if not reserva_id or not msg_usuario:
         return jsonify({"erro": "Campos obrigatórios: reserva_id, mensagem"}), 400
 
     reserva = buscar_por_voucher(reserva_id)
@@ -112,15 +112,14 @@ def chat_ia():
 
     crew = agentes_chat[reserva_id]
 
-    # 🔸 Caso especial: mensagem de abertura do sistema
-    if msg_usuario == "__inicio__":
-        saudacao = (
-            f"Olá {reserva.get('nome_hospede_principal')} 👋\n"
-            f"Sou o assistente do café da manhã do Duke Beach Hotel ☕\n"
-            f"Estou aqui para te ajudar a montar um café da manhã personalizado!\n\n"
-            f"Vamos começar?"
-        )
-        return jsonify({"resposta": saudacao})
+    if msg_usuario in ["vamos", "vamos começar", "ok", "sim", "começar", "iniciar"]:
+        resultado = crew.kickoff(inputs={"mensagem": msg_usuario})
+        return jsonify({"resposta": str(resultado.output)})
+    else:
+        nome = reserva.get("nome_hospede_principal", "hóspede")
+        texto = f"Olá {nome}, tudo bem? Sou o agente de café da manhã do Duke Beach Hotel e estou aqui para ajudar você a personalizar essa experiência.\n\nQuando estiver pronto, me diga \"vamos começar\"."
+        return jsonify({"resposta": texto})
+
 
     # 🔸 Demais interações, passa para o agente
     resultado = crew.kickoff(inputs={"mensagem": msg_usuario})
