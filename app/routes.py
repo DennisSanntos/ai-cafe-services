@@ -27,7 +27,7 @@ OPCOES_PADRAO = {
     "acompanhamentos": ["Manteiga", "Requeijão", "Geleia", "Mel", "Nenhum"],
     "frios": ["Queijo branco", "Presunto", "Peito de peru", "Queijo prato", "Sem frios"],
     "bolos_doces": ["Bolo de cenoura", "Pão doce", "Rosquinha", "Sem doces"]
-]
+}
 
 # HOME
 @main.route('/')
