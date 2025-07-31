@@ -12,6 +12,7 @@ FIELD_MAP_RESERVAS = {
     "personalizacao_concluida": "field_5054864",
     "dias_para_checkin": "field_5054865",
     "link_chat": "field_5054866"
+    "reserva_id": "field_5110280"
 }
 
 # Tabela de respostas do agente (preferencias_cafe)
