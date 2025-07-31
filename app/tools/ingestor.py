@@ -30,19 +30,22 @@ def processar_planilhas(path_periodo, path_apartamentos):
         "Check-out": "checkout"
     })
 
-    # Merge final
+    # Merge apenas por 'voucher'
     df = pd.merge(df_apto, df_periodo[["voucher", "nome_hospede", "telefone"]], on="voucher", how="left")
 
-    # Processa campos
+    # Criação do campo reserva_id único por voucher + apartamento
+    df["reserva_id"] = df.apply(lambda row: f"{row['voucher']}_{row['apartamento']}", axis=1)
+    df["link_chat"] = df["reserva_id"].apply(lambda rid: f"{CHAT_BASE_URL}/chat?reserva_id={rid}")
+
+    # Processa datas
     df["checkin"] = pd.to_datetime(df["checkin"]).dt.date
     df["checkout"] = pd.to_datetime(df["checkout"]).dt.date
     df["dias_para_checkin"] = df["checkin"].apply(lambda d: (d - datetime.now().date()).days)
     df["personalizacao_concluida"] = False
-    df["link_chat"] = df["voucher"].apply(lambda v: f"{CHAT_BASE_URL}/chat?reserva_id={v}")
 
     # Campos esperados
     campos = [
-        "voucher", "nome_hospede", "telefone",
+        "reserva_id", "voucher", "nome_hospede", "telefone",
         "checkin", "checkout",
         "apartamento", "categoria_apartamento",
         "hospedes_apartamento", "email_hospede",
@@ -54,7 +57,7 @@ def processar_planilhas(path_periodo, path_apartamentos):
     for _, row in df.iterrows():
         payload = {}
         for k in campos:
-            if pd.notna(row[k]):
+            if pd.notna(row.get(k)):
                 valor = row[k]
                 if isinstance(valor, (datetime, pd.Timestamp)):
                     valor = valor.date().isoformat()
@@ -65,7 +68,7 @@ def processar_planilhas(path_periodo, path_apartamentos):
         resultado = criar_linha(payload, table_id="621432", usar_mapa=True)
 
         if isinstance(resultado, dict) and resultado.get("erro"):
-            print(f"❌ Erro no voucher {row.get('voucher', 'N/A')}: {resultado['erro']}")
+            print(f"❌ Erro no voucher {row.get('voucher', 'N/A')} - apto {row.get('apartamento')}: {resultado['erro']}")
             erros += 1
         else:
             enviados += 1
@@ -76,3 +79,4 @@ def processar_planilhas(path_periodo, path_apartamentos):
         "erros": erros,
         "total": len(df)
     }
+
